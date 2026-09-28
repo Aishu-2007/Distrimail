@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trash | DistriMail</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">
+            <div class="brand-mark small">✉</div>
+            <div>Distri<span>Mail</span><small>Distributed Email</small></div>
+        </div>
+        <a class="compose-btn" href="{{ url_for('compose') }}">✏ <span>Compose</span></a>
+        <nav>
+            <a class="nav-item " href="{{ url_for('inbox') }}">📥 <span>Inbox</span>
+                {% if inbox_count %}<b class="count">{{ inbox_count }}</b>{% endif %}
+            </a>
+            <a class="nav-item " href="{{ url_for('sent') }}">📤 <span>Sent</span></a>
+            <a class="nav-item active" href="{{ url_for('trash') }}">🗑 <span>Trash</span></a>
+            <a class="nav-item " href="{{ url_for('spam') }}">🚫 <span>Spam</span></a>
+            <a class="nav-item " href="{{ url_for('search') }}">🔎 <span>Search</span></a>
+            <a class="nav-item" href="{{ url_for('admin') }}">⚙ <span>Admin Dashboard</span></a>
+        </nav>
+        <div class="sidebar-bottom">
+            <div class="distributed-card">
+                <span class="pulse-dot"></span>
+                <div><strong>Distributed</strong><small>Redis queue active</small></div>
+            </div>
+            <a class="nav-item logout" href="{{ url_for('logout') }}">↪ <span>Logout</span></a>
+        </div>
+    </aside>
+
+    <main class="main-area">
+        <header class="topbar">
+            <button class="mobile-menu" onclick="toggleSidebar()">☰</button>
+            <form class="global-search" action="{{ url_for('search') }}" method="GET">
+                <span>⌕</span>
+                <input name="q" placeholder="Search mail..." autocomplete="off">
+            </form>
+            <div class="top-user">
+                <div class="avatar">{{ current_user['name'][0]|upper }}</div>
+                <div class="user-text"><strong>{{ current_user['name'] }}</strong><small>{{ current_user['email'] }}</small></div>
+            </div>
+        </header>
+
+        <section class="page-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    <div class="alert {{ category }} page-alert">{{ message }}</div>
+                {% endfor %}
+            {% endwith %}
+<div class="page-heading">
+    <div><p class="eyebrow">RECYCLE BIN</p><h1>Trash</h1><p class="muted">Restore messages or permanently remove them.</p></div>
+</div>
+<div class="card email-card">
+    {% if emails %}
+        {% for email in emails %}
+        <div class="email-row">
+            <div class="avatar sender-avatar">{{ email['sender_name'][0]|upper }}</div>
+            <div class="email-main">
+                <div class="email-top"><strong>{{ email['sender_name'] }}</strong><span>{{ email['created_at'] }}</span></div>
+                <div class="email-subject">{{ email['subject'] }}</div>
+                <div class="email-preview">{{ email['body'][:90] }}</div>
+            </div>
+            <div class="row-actions">
+                <a class="small-action" href="{{ url_for('restore_email', email_id=email['id']) }}">↩ Restore</a>
+                <a class="small-action danger-text" href="{{ url_for('permanent_delete', email_id=email['id']) }}" onclick="return confirm('Permanently delete this email?')">Delete</a>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state"><div>🗑️</div><h3>Trash is empty</h3><p>Deleted inbox messages will appear here.</p></div>
+    {% endif %}
+</div>        </section>
+    </main>
+</div>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

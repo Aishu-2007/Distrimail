@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | DistriMail</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">
+            <div class="brand-mark small">✉</div>
+            <div>Distri<span>Mail</span><small>Distributed Email</small></div>
+        </div>
+        <a class="compose-btn" href="{{ url_for('compose') }}">✏ <span>Compose</span></a>
+        <nav>
+            <a class="nav-item " href="{{ url_for('inbox') }}">📥 <span>Inbox</span>
+                {% if inbox_count %}<b class="count">{{ inbox_count }}</b>{% endif %}
+            </a>
+            <a class="nav-item " href="{{ url_for('sent') }}">📤 <span>Sent</span></a>
+            <a class="nav-item " href="{{ url_for('trash') }}">🗑 <span>Trash</span></a>
+            <a class="nav-item " href="{{ url_for('spam') }}">🚫 <span>Spam</span></a>
+            <a class="nav-item " href="{{ url_for('search') }}">🔎 <span>Search</span></a>
+            <a class="nav-item" href="{{ url_for('admin') }}">⚙ <span>Admin Dashboard</span></a>
+        </nav>
+        <div class="sidebar-bottom">
+            <div class="distributed-card">
+                <span class="pulse-dot"></span>
+                <div><strong>Distributed</strong><small>Redis queue active</small></div>
+            </div>
+            <a class="nav-item logout" href="{{ url_for('logout') }}">↪ <span>Logout</span></a>
+        </div>
+    </aside>
+
+    <main class="main-area">
+        <header class="topbar">
+            <button class="mobile-menu" onclick="toggleSidebar()">☰</button>
+            <form class="global-search" action="{{ url_for('search') }}" method="GET">
+                <span>⌕</span>
+                <input name="q" placeholder="Search mail..." autocomplete="off">
+            </form>
+            <div class="top-user">
+                <div class="avatar">{{ current_user['name'][0]|upper }}</div>
+                <div class="user-text"><strong>{{ current_user['name'] }}</strong><small>{{ current_user['email'] }}</small></div>
+            </div>
+        </header>
+
+        <section class="page-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    <div class="alert {{ category }} page-alert">{{ message }}</div>
+                {% endfor %}
+            {% endwith %}
+<div class="page-heading">
+    <div><p class="eyebrow">SYSTEM CONTROL CENTER</p><h1>Admin Dashboard</h1><p class="muted">A simple view of users, jobs, Redis queue and workers.</p></div>
+    <span class="live-badge"><i></i> Live monitoring</span>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card"><span>👥</span><small>Total Users</small><strong>{{ stats.users }}</strong></div>
+    <div class="stat-card"><span>✉️</span><small>Total Emails</small><strong>{{ stats.emails }}</strong></div>
+    <div class="stat-card"><span>🟡</span><small>Pending / Processing</small><strong>{{ stats.pending }}</strong></div>
+    <div class="stat-card"><span>🟢</span><small>Sent</small><strong>{{ stats.sent }}</strong></div>
+    <div class="stat-card"><span>🔴</span><small>Failed</small><strong>{{ stats.failed }}</strong></div>
+    <div class="stat-card"><span>🚫</span><small>Spam</small><strong>{{ stats.spam }}</strong></div>
+    <div class="stat-card accent-stat"><span>⚡</span><small>Redis Queue</small><strong>{{ queue_size if queue_size >= 0 else 'OFF' }}</strong></div>
+</div>
+
+<div class="admin-grid">
+    <div class="card">
+        <div class="section-title"><div><h3>Workers</h3><p>Heartbeat-based status</p></div><span class="live-badge"><i></i> Live</span></div>
+        <div class="worker-list">
+            {% for worker in workers %}
+            <div class="worker-row">
+                <div class="worker-icon">⚙</div>
+                <div class="worker-info"><strong>{{ worker.worker_name }}</strong><small>{{ worker.last_seen or 'No heartbeat yet' }}</small></div>
+                <div class="worker-metrics"><span>Processed {{ worker.processed_count }}</span><span>Failed {{ worker.failed_count }}</span></div>
+                <span class="worker-status {{ worker.display_status|lower }}"><i></i>{{ worker.display_status }}</span>
+            </div>
+            {% else %}
+            <div class="empty-state compact"><div>⚙️</div><h3>No workers yet</h3><p>Start worker.py in one or more terminals.</p></div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card chart-card">
+        <div class="section-title"><div><h3>Email Processing</h3><p>Current database totals</p></div></div>
+        <canvas id="emailChart"></canvas>
+        <div class="chart-data" data-sent="{{ stats.sent }}" data-failed="{{ stats.failed }}" data-pending="{{ stats.pending }}"></div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="section-title"><div><h3>Recent Email Jobs</h3><p>Latest distributed processing records</p></div></div>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>ID</th><th>Sender</th><th>Receiver</th><th>Subject</th><th>Status</th><th>Worker</th><th>Time</th></tr></thead>
+            <tbody>
+            {% for job in recent_jobs %}
+            <tr>
+                <td>#{{ job.id }}</td><td>{{ job.sender_email }}</td><td>{{ job.receiver_email }}</td>
+                <td>{{ job.subject }}</td><td><span class="status-badge {{ job.status|lower }}">{{ job.status }}</span></td>
+                <td>{{ job.worker_name or 'Waiting' }}</td><td>{{ job.created_at }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" class="table-empty">No jobs yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+const chartData = document.querySelector('.chart-data');
+if (chartData) {
+    new Chart(document.getElementById('emailChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Sent', 'Failed', 'Pending'],
+            datasets: [{ data: [Number(chartData.dataset.sent), Number(chartData.dataset.failed), Number(chartData.dataset.pending)] }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    });
+}
+</script>        </section>
+    </main>
+</div>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

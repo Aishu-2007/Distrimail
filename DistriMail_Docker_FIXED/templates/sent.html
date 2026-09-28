@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sent | DistriMail</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">
+            <div class="brand-mark small">✉</div>
+            <div>Distri<span>Mail</span><small>Distributed Email</small></div>
+        </div>
+        <a class="compose-btn" href="{{ url_for('compose') }}">✏ <span>Compose</span></a>
+        <nav>
+            <a class="nav-item " href="{{ url_for('inbox') }}">📥 <span>Inbox</span>
+                {% if inbox_count %}<b class="count">{{ inbox_count }}</b>{% endif %}
+            </a>
+            <a class="nav-item active" href="{{ url_for('sent') }}">📤 <span>Sent</span></a>
+            <a class="nav-item " href="{{ url_for('trash') }}">🗑 <span>Trash</span></a>
+            <a class="nav-item " href="{{ url_for('spam') }}">🚫 <span>Spam</span></a>
+            <a class="nav-item " href="{{ url_for('search') }}">🔎 <span>Search</span></a>
+            <a class="nav-item" href="{{ url_for('admin') }}">⚙ <span>Admin Dashboard</span></a>
+        </nav>
+        <div class="sidebar-bottom">
+            <div class="distributed-card">
+                <span class="pulse-dot"></span>
+                <div><strong>Distributed</strong><small>Redis queue active</small></div>
+            </div>
+            <a class="nav-item logout" href="{{ url_for('logout') }}">↪ <span>Logout</span></a>
+        </div>
+    </aside>
+
+    <main class="main-area">
+        <header class="topbar">
+            <button class="mobile-menu" onclick="toggleSidebar()">☰</button>
+            <form class="global-search" action="{{ url_for('search') }}" method="GET">
+                <span>⌕</span>
+                <input name="q" placeholder="Search mail..." autocomplete="off">
+            </form>
+            <div class="top-user">
+                <div class="avatar">{{ current_user['name'][0]|upper }}</div>
+                <div class="user-text"><strong>{{ current_user['name'] }}</strong><small>{{ current_user['email'] }}</small></div>
+            </div>
+        </header>
+
+        <section class="page-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    <div class="alert {{ category }} page-alert">{{ message }}</div>
+                {% endfor %}
+            {% endwith %}
+<div class="page-heading">
+    <div><p class="eyebrow">OUTGOING</p><h1>Sent</h1><p class="muted">Track every email submitted to the distributed queue.</p></div>
+    <a href="{{ url_for('compose') }}" class="btn btn-primary">✏ Compose</a>
+</div>
+<div class="card email-card">
+    <div class="card-toolbar"><strong>{{ emails|length }} sent message{% if emails|length != 1 %}s{% endif %}</strong></div>
+    {% if emails %}
+        {% for email in emails %}
+        <div class="email-row sent-row">
+            <div class="avatar sender-avatar">{{ email['receiver_display_name'][0]|upper }}</div>
+            <div class="email-main">
+                <div class="email-top"><strong>To: {{ email['receiver_display_name'] }}</strong><span>{{ email['created_at'] }}</span></div>
+                <div class="email-subject">{{ email['subject'] }}</div>
+                <div class="email-preview">{{ email['receiver_email'] }}</div>
+            </div>
+            <span class="status-badge {{ email['status']|lower }}">{{ email['status'] }}</span>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state"><div>📤</div><h3>No sent emails</h3><p>Compose a message to see its queue status here.</p></div>
+    {% endif %}
+</div>        </section>
+    </main>
+</div>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

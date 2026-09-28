@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compose | DistriMail</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">
+            <div class="brand-mark small">✉</div>
+            <div>Distri<span>Mail</span><small>Distributed Email</small></div>
+        </div>
+        <a class="compose-btn" href="{{ url_for('compose') }}">✏ <span>Compose</span></a>
+        <nav>
+            <a class="nav-item " href="{{ url_for('inbox') }}">📥 <span>Inbox</span>
+                {% if inbox_count %}<b class="count">{{ inbox_count }}</b>{% endif %}
+            </a>
+            <a class="nav-item " href="{{ url_for('sent') }}">📤 <span>Sent</span></a>
+            <a class="nav-item " href="{{ url_for('trash') }}">🗑 <span>Trash</span></a>
+            <a class="nav-item " href="{{ url_for('spam') }}">🚫 <span>Spam</span></a>
+            <a class="nav-item " href="{{ url_for('search') }}">🔎 <span>Search</span></a>
+            <a class="nav-item" href="{{ url_for('admin') }}">⚙ <span>Admin Dashboard</span></a>
+        </nav>
+        <div class="sidebar-bottom">
+            <div class="distributed-card">
+                <span class="pulse-dot"></span>
+                <div><strong>Distributed</strong><small>Redis queue active</small></div>
+            </div>
+            <a class="nav-item logout" href="{{ url_for('logout') }}">↪ <span>Logout</span></a>
+        </div>
+    </aside>
+
+    <main class="main-area">
+        <header class="topbar">
+            <button class="mobile-menu" onclick="toggleSidebar()">☰</button>
+            <form class="global-search" action="{{ url_for('search') }}" method="GET">
+                <span>⌕</span>
+                <input name="q" placeholder="Search mail..." autocomplete="off">
+            </form>
+            <div class="top-user">
+                <div class="avatar">{{ current_user['name'][0]|upper }}</div>
+                <div class="user-text"><strong>{{ current_user['name'] }}</strong><small>{{ current_user['email'] }}</small></div>
+            </div>
+        </header>
+
+        <section class="page-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    <div class="alert {{ category }} page-alert">{{ message }}</div>
+                {% endfor %}
+            {% endwith %}
+<div class="page-heading">
+    <div><p class="eyebrow">NEW MESSAGE</p><h1>Compose Email</h1><p class="muted">Your message will be placed on Redis and then sent to the real email address you enter.</p></div>
+</div>
+
+<div class="card compose-card">
+    <div class="compose-banner"><span>⚡</span><div><strong>Distributed delivery</strong><small>Flask → SQLite → Redis → Worker → Real Email</small></div></div>
+    <form method="POST" enctype="multipart/form-data">
+        <label>To</label>
+        <input type="email" name="to" placeholder="someone@gmail.com" required>
+
+        <label>Subject</label>
+        <input type="text" name="subject" placeholder="What is this email about?" required>
+
+        <label>Message</label>
+        <textarea name="body" rows="10" placeholder="Write your message..." required></textarea>
+
+        <div class="compose-bottom">
+            <div class="file-input">
+                <label for="attachment" class="btn btn-light">📎 Choose File</label>
+                <input id="attachment" type="file" name="attachment" accept=".pdf,.docx,.txt,.png,.jpg,.jpeg" onchange="showFileName(this)">
+                <span id="fileName">No file selected · Max 5 MB</span>
+            </div>
+        </div>
+
+        <label class="check-line"><input type="checkbox" name="simulate_failure"> Simulate failure (for retry demo)</label>
+        <small class="help-text">If checked, the worker intentionally fails 3 times and marks the email FAILED.</small>
+
+        <div class="form-actions">
+            <button class="btn btn-primary" type="submit">🚀 Send Email</button>
+            <a class="btn btn-light" href="{{ url_for('inbox') }}">Cancel</a>
+        </div>
+    </form>
+</div>        </section>
+    </main>
+</div>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

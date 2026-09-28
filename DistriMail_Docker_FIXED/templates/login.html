@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | DistriMail</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="auth-page">
+<div class="auth-shell">
+    <div class="auth-brand">
+        <div class="brand-mark">✉</div>
+        <h1>Distri<span>Mail</span></h1>
+        <p>Fast. Reliable. Distributed.</p>
+        <div class="auth-points">
+            <div>⚡ Redis-powered email queue</div>
+            <div>🔄 Multiple background workers</div>
+                    </div>
+    </div>
+
+    <div class="auth-card">
+        <div class="mobile-brand">✉ DistriMail</div>
+        <h2>Welcome back!</h2>
+        <p class="muted">Sign in to continue to your mailbox.</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <form method="POST">
+            <label>Email / Username</label>
+            <input type="email" name="email" placeholder="you@example.com" required autofocus>
+
+            <label>Password</label>
+            <input type="password" name="password" placeholder="••••••••" required>
+
+            <button class="btn btn-primary full" type="submit">Login →</button>
+        </form>
+
+        <p class="auth-switch">Don't have an account?
+            <a href="{{ url_for('register') }}">Create Account</a>
+        </p>
+        <div class="demo-note">Demo project – Distributed Email Service</div>
+    </div>
+</div>
+</body>
+</html>

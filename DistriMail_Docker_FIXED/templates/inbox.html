@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inbox | DistriMail</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">
+            <div class="brand-mark small">✉</div>
+            <div>Distri<span>Mail</span><small>Distributed Email</small></div>
+        </div>
+        <a class="compose-btn" href="{{ url_for('compose') }}">✏ <span>Compose</span></a>
+        <nav>
+            <a class="nav-item active" href="{{ url_for('inbox') }}">📥 <span>Inbox</span>
+                {% if inbox_count %}<b class="count">{{ inbox_count }}</b>{% endif %}
+            </a>
+            <a class="nav-item " href="{{ url_for('sent') }}">📤 <span>Sent</span></a>
+            <a class="nav-item " href="{{ url_for('trash') }}">🗑 <span>Trash</span></a>
+            <a class="nav-item " href="{{ url_for('spam') }}">🚫 <span>Spam</span></a>
+            <a class="nav-item " href="{{ url_for('search') }}">🔎 <span>Search</span></a>
+            <a class="nav-item" href="{{ url_for('admin') }}">⚙ <span>Admin Dashboard</span></a>
+        </nav>
+        <div class="sidebar-bottom">
+            <div class="distributed-card">
+                <span class="pulse-dot"></span>
+                <div><strong>Distributed</strong><small>Redis queue active</small></div>
+            </div>
+            <a class="nav-item logout" href="{{ url_for('logout') }}">↪ <span>Logout</span></a>
+        </div>
+    </aside>
+
+    <main class="main-area">
+        <header class="topbar">
+            <button class="mobile-menu" onclick="toggleSidebar()">☰</button>
+            <form class="global-search" action="{{ url_for('search') }}" method="GET">
+                <span>⌕</span>
+                <input name="q" placeholder="Search mail..." autocomplete="off">
+            </form>
+            <div class="top-user">
+                <div class="avatar">{{ current_user['name'][0]|upper }}</div>
+                <div class="user-text"><strong>{{ current_user['name'] }}</strong><small>{{ current_user['email'] }}</small></div>
+            </div>
+        </header>
+
+        <section class="page-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, message in messages %}
+                    <div class="alert {{ category }} page-alert">{{ message }}</div>
+                {% endfor %}
+            {% endwith %}
+<div class="page-heading">
+    <div><p class="eyebrow">YOUR MAILBOX</p><h1>Inbox</h1><p class="muted">Messages delivered by the DistriMail distributed queue.</p></div>
+    <a href="{{ url_for('compose') }}" class="btn btn-primary">✏ Compose</a>
+</div>
+
+<div class="content-grid">
+    <div class="card email-card">
+        <div class="card-toolbar">
+            <strong>{{ emails|length }} message{% if emails|length != 1 %}s{% endif %}</strong>
+            <span class="live-badge"><i></i> Live</span>
+        </div>
+        {% if emails %}
+            {% for email in emails %}
+            <div class="email-row {% if not email['is_read'] %}unread{% endif %}" onclick="window.location='{{ url_for('inbox', open=email['id']) }}'">
+                <div class="avatar sender-avatar">{{ email['sender_name'][0]|upper }}</div>
+                <div class="email-main">
+                    <div class="email-top"><strong>{{ email['sender_name'] }}</strong><span>{{ email['created_at'] }}</span></div>
+                    <div class="email-subject">{{ email['subject'] }}</div>
+                    <div class="email-preview">{{ email['body'].replace('[[SIMULATE_FAILURE]]','')[:90] }}</div>
+                </div>
+                <div class="row-actions">
+                    <span class="status-badge {{ email['status']|lower }}">{{ email['status'] }}</span>
+                    <a title="Trash" href="{{ url_for('move_to_trash', email_id=email['id']) }}" onclick="event.stopPropagation()">🗑</a>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state"><div>📭</div><h3>Your inbox is empty</h3><p>When a worker delivers an email, it will appear here instantly.</p></div>
+        {% endif %}
+    </div>
+
+    <div class="card reading-card">
+        {% if selected %}
+            <div class="reading-header">
+                <div>
+                    <span class="status-badge {{ selected['status']|lower }}">{{ selected['status'] }}</span>
+                    {% if selected['folder']=='SPAM' %}<span class="status-badge spam">SPAM</span>{% endif %}
+                </div>
+                <a href="{{ url_for('toggle_read', email_id=selected['id'], value=0) }}" class="text-link">Mark unread</a>
+            </div>
+            <h2>{{ selected['subject'] }}</h2>
+            <div class="sender-detail">
+                <div class="avatar">{{ selected['sender_name'][0]|upper }}</div>
+                <div><strong>{{ selected['sender_name'] }}</strong><small>{{ selected['sender_email'] }} · {{ selected['created_at'] }}</small></div>
+            </div>
+            <div class="message-body">{{ selected['body'].replace('[[SIMULATE_FAILURE]]','') }}</div>
+            {% if attachments %}
+                <div class="attachment-list">
+                    <h4>📎 Attachments</h4>
+                    {% for file in attachments %}
+                        <a class="attachment-chip" href="{{ url_for('download_attachment', attachment_id=file['id']) }}">📄 {{ file['filename'] }}</a>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            <div class="reading-actions">
+                <a class="btn btn-light" href="{{ url_for('move_to_trash', email_id=selected['id']) }}">🗑 Move to Trash</a>
+            </div>
+        {% else %}
+            <div class="empty-state reading-empty"><div>✉️</div><h3>Select an email</h3><p>Click a message on the left to read it.</p></div>
+        {% endif %}
+    </div>
+</div>        </section>
+    </main>
+</div>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

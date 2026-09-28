@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account | DistriMail</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="auth-page">
+<div class="auth-shell">
+    <div class="auth-brand">
+        <div class="brand-mark">✉</div>
+        <h1>Distri<span>Mail</span></h1>
+        <p>Fast. Reliable. Distributed.</p>
+        <div class="auth-points">
+            <div>🔐 Secure password hashing</div>
+            <div>📬 Internal email delivery</div>
+            <div>📎 Simple attachments</div>
+        </div>
+    </div>
+
+    <div class="auth-card">
+        <div class="mobile-brand">✉ DistriMail</div>
+        <h2>Create your account</h2>
+        <p class="muted">Join the DistriMail demo network.</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <form method="POST">
+            <label>Full Name</label>
+            <input type="text" name="name" placeholder="Aishwarya Animalla" required>
+
+            <label>Email</label>
+            <input type="email" name="email" placeholder="you@example.com" required>
+
+            <label>Password</label>
+            <input type="password" name="password" placeholder="Minimum 6 characters" required>
+
+            <label>Confirm Password</label>
+            <input type="password" name="confirm_password" placeholder="Repeat password" required>
+
+            <button class="btn btn-primary full" type="submit">Create Account →</button>
+        </form>
+
+        <p class="auth-switch">Already have an account?
+            <a href="{{ url_for('login') }}">Login</a>
+        </p>
+    </div>
+</div>
+</body>
+</html>
