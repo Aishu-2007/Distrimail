@@ -1,52 +1,69 @@
 services:
+
   redis:
     image: redis:7-alpine
     container_name: distrimail-redis
     restart: unless-stopped
+
+    ports:
+      - "6379:6379"
+
+    volumes:
+      - redis_data:/data
+
+    command: redis-server --appendonly yes
+
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 10
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes
+      start_period: 5s
+
 
   app:
     build: .
     container_name: distrimail-app
     restart: unless-stopped
+
     depends_on:
       redis:
         condition: service_healthy
+
     env_file:
       - .env
+
     environment:
       REDIS_URL: redis://redis:6379/0
-      SMTP_USE_SSL: "true"
+
     ports:
       - "5000:5000"
+
     volumes:
       - app_database:/app/database
       - app_uploads:/app/uploads
 
+
   worker:
     build: .
     restart: unless-stopped
+
     depends_on:
       redis:
         condition: service_healthy
+
     env_file:
       - .env
+
     environment:
       REDIS_URL: redis://redis:6379/0
-      SMTP_USE_SSL: "true"
+
     command: ["python", "worker.py"]
+
     volumes:
       - app_database:/app/database
       - app_uploads:/app/uploads
+
 
 volumes:
   redis_data:

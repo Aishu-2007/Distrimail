@@ -333,11 +333,14 @@ def too_large(_error):
     return redirect(url_for("compose"))
 
 if __name__ == "__main__":
+    host = os.environ.get("HOST", "0.0.0.0")
+    port = int(os.environ.get("PORT", "5000"))
+
     try:
         redis_client.ping()
         print("Redis connection: OK")
     except redis.RedisError:
         print("WARNING: Redis container is not reachable. Start Docker Compose before sending emails.")
 
-    print("DistriMail running at http://0.0.0.0:5000")
-    app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False)
+    print(f"DistriMail running at http://{host}:{port}")
+    app.run(host=host, port=port, debug=False, use_reloader=False)
